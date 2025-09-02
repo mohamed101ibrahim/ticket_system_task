@@ -37,10 +37,15 @@ class Ticket extends Model
     {
         return $this->belongsTo(User::class, 'agent_id');
     }
-    
+
     public function admin()
     {
         return $this->belongsTo(User::class, 'admin_id');
+    }
+
+    public function replies()
+    {
+        return $this->hasMany(TicketReply::class);
     }
 
     /**

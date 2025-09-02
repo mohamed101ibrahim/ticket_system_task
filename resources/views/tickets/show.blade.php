@@ -1,55 +1,64 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-3xl mx-auto px-4 py-6">
-    <div class="bg-white shadow-md rounded-lg p-6 space-y-4">
-        <h1 class="text-2xl font-bold text-gray-800">Ticket #{{ $ticket->id }}</h1>
+<div class="container mx-auto px-4 py-6">
 
-        <div>
-            <h2 class="font-semibold text-gray-700">Title</h2>
-            <p class="text-gray-800">{{ $ticket->title }}</p>
-        </div>
+    {{-- Ticket Header --}}
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ $ticket->title }}</h1>
+        <p class="text-gray-600 mb-4">{{ $ticket->description }}</p>
 
-        <div>
-            <h2 class="font-semibold text-gray-700">Description</h2>
-            <p class="text-gray-800">{{ $ticket->description }}</p>
-        </div>
-
-        <div class="flex space-x-6">
-            <div>
-                <h2 class="font-semibold text-gray-700">Status</h2>
+        <div class="flex flex-wrap gap-4 text-sm text-gray-700">
+            <span><strong>Status:</strong>
                 @if($ticket->status === 'open')
-                    <span class="px-2 py-1 rounded bg-green-100 text-green-800">{{ $ticket->status_label }}</span>
-                @elseif($ticket->status === 'in_progress')
-                    <span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800">{{ $ticket->status_label }}</span>
+                    <span class="px-2 py-1 rounded bg-green-100 text-green-700">Open</span>
                 @else
-                    <span class="px-2 py-1 rounded bg-red-100 text-red-800">{{ $ticket->status_label }}</span>
+                    <span class="px-2 py-1 rounded bg-red-100 text-red-700">Closed</span>
                 @endif
-            </div>
+            </span>
 
-            <div>
-                <h2 class="font-semibold text-gray-700">Priority</h2>
-                @if($ticket->priority === 'low')
-                    <span class="px-2 py-1 rounded bg-blue-100 text-blue-800">{{ $ticket->priority_label }}</span>
-                @elseif($ticket->priority === 'medium')
-                    <span class="px-2 py-1 rounded bg-orange-100 text-orange-800">{{ $ticket->priority_label }}</span>
-                @else
-                    <span class="px-2 py-1 rounded bg-red-100 text-red-800">{{ $ticket->priority_label }}</span>
-                @endif
-            </div>
+            <span><strong>Priority:</strong> {{ ucfirst($ticket->priority) }}</span>
 
-            <div>
-                <h2 class="font-semibold text-gray-700">Assigned Agent</h2>
-                <p class="text-gray-800">{{ $ticket->agent?->name ?? 'Not Assigned' }}</p>
-            </div>
-        </div>
-
-        <div class="flex justify-end space-x-2">
-            @if(auth()->user()->isAdmin() || (auth()->user()->isAgent() && $ticket->agent_id == auth()->id()))
-                <a href="{{ route('tickets.edit', $ticket) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded shadow">Edit</a>
+            @if($ticket->agent)
+                <span><strong>Assigned Agent:</strong> {{ $ticket->agent->name }}</span>
+            @else
+                <span class="text-gray-500"><em>No agent assigned yet</em></span>
             @endif
-            <a href="{{ route('tickets.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow">Back</a>
         </div>
     </div>
+
+    {{-- Conversation Section --}}
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Conversation</h2>
+
+        @forelse($ticket->replies as $reply)
+            <div class="mb-4 p-4 rounded border
+                {{ $reply->user->isAgent() ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200' }}">
+                <div class="flex justify-between items-center mb-2">
+                    <strong>{{ $reply->user->name }}</strong>
+                    <small class="text-gray-500">{{ $reply->created_at->diffForHumans() }}</small>
+                </div>
+                <p class="text-gray-700">{{ $reply->message }}</p>
+            </div>
+        @empty
+            <p class="text-gray-500">No replies yet. Be the first to reply.</p>
+        @endforelse
+    </div>
+
+    {{-- Reply Form --}}
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Post a Reply</h2>
+
+        <form action="{{ route('tickets.replies.store', $ticket) }}" method="POST">
+            @csrf
+            <textarea name="message" rows="4" class="w-full border rounded p-2 mb-4" required></textarea>
+
+            <button type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
+                Send Reply
+            </button>
+        </form>
+    </div>
+
 </div>
 @endsection
